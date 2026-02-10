@@ -1,16 +1,12 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Chart as ChartJS, ArcElement, BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend } from "chart.js";
 
-// Register Chart.js components
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend);
 
-// Dynamically import Bar and Pie components to disable SSR
 const Bar = dynamic(() => import("react-chartjs-2").then((mod) => mod.Bar), { ssr: false });
-const Pie = dynamic(() => import("react-chartjs-2").then((mod) => mod.Pie), { ssr: false });
 
-// Dummy leads for the Lead Generator
 const dummyLeads = [
   { name: "Ravi Kumar", location: "Hyderabad", language: "Telugu", phone: "+919876543210" },
   { name: "Sunita Sharma", location: "Lucknow", language: "Hindi", phone: "+919876543211" },
@@ -18,7 +14,6 @@ const dummyLeads = [
   { name: "Rithvik Bhaskar", location: "Guntur", language: "English", phone: "+919491642754" },
 ];
 
-// Dummy data for the Growth Dashboard
 const growthData = {
   earningsForecast: "₹12,000 this month",
   salesData: {
@@ -28,419 +23,48 @@ const growthData = {
     "Mutual Funds": 0,
     "Savings Account": 1,
   },
-  categoryGaps: ["Loan", "Mutual Funds"],
-  dailyGoal: { target: "₹500", achieved: "₹300" },
-  weeklyGoal: { target: "₹3,500", achieved: "₹2,800" },
+  dailyGoal: { target: 500, achieved: 300 },
+  weeklyGoal: { target: 3500, achieved: 2800 },
   topGPs: [
     { rank: 1, name: "Anjali Gupta", sales: { "Health Insurance": 10, "Loan": 5, "Credit Card": 3 } },
     { rank: 2, name: "Rahul Sharma", sales: { "Mutual Funds": 8, "Savings Account": 4, "Health Insurance": 2 } },
     { rank: 3, name: "Priya Menon", sales: { "Credit Card": 7, "Loan": 3, "Mutual Funds": 2 } },
-    { rank: 4, name: "Vikram Singh", sales: { "Health Insurance": 6, "Savings Account": 3, "Loan": 1 } },
-    { rank: 5, name: "Neha Jain", sales: { "Mutual Funds": 5, "Credit Card": 4, "Health Insurance": 2 } },
   ],
   dailyMission: "Pitch 2 insurance plans today to boost earnings by ₹600",
 };
 
-// Dummy data for Post-Sale Automation
 const customers = [
-  {
-    name: "Ravi Kumar",
-    policy: "Health Insurance",
-    renewalDate: "2025-05-20",
-    phone: "+919876543210",
-    language: "Telugu",
-    claimStatus: "Pending",
-    sentiment: "neutral",
-  },
-  {
-    name: "Sunita Sharma",
-    policy: "Credit Card",
-    renewalDate: "2025-05-18",
-    phone: "+919876543211",
-    language: "Hindi",
-    claimStatus: "Approved",
-    sentiment: "positive",
-  },
-  {
-    name: "Neha Jain",
-    policy: "Health Insurance",
-    renewalDate: "2025-06-01",
-    phone: "+919876543212",
-    language: "Hindi",
-    claimStatus: "Not Filed",
-    sentiment: "negative",
-  },
+  { name: "Ravi Kumar", policy: "Health Insurance", renewalDate: "2025-05-20", phone: "+919876543210", language: "Telugu", claimStatus: "Pending" },
+  { name: "Sunita Sharma", policy: "Credit Card", renewalDate: "2025-05-18", phone: "+919876543211", language: "Hindi", claimStatus: "Approved" },
+  { name: "Neha Jain", policy: "Health Insurance", renewalDate: "2025-06-01", phone: "+919876543212", language: "Hindi", claimStatus: "Not Filed" },
 ];
-
-// Dummy data for Clients and their Sales/Profits
-const clientsData = [
-  {
-    name: "Aarav Patel",
-    sales: { "Health Insurance": 8, "Credit Card": 5, "Loan": 2, "Mutual Funds": 3, "Savings Account": 4 },
-    profits: { "Health Insurance": 3000, "Credit Card": 1500, "Loan": 500, "Mutual Funds": 1000, "Savings Account": 1200 },
-  },
-  {
-    name: "Priya Sharma",
-    sales: { "Health Insurance": 5, "Credit Card": 3, "Loan": 0, "Mutual Funds": 4, "Savings Account": 2 },
-    profits: { "Health Insurance": 2000, "Credit Card": 900, "Loan": 0, "Mutual Funds": 1200, "Savings Account": 800 },
-  },
-  {
-    name: "Vikram Singh",
-    sales: { "Health Insurance": 6, "Credit Card": 2, "Loan": 1, "Mutual Funds": 5, "Savings Account": 3 },
-    profits: { "Health Insurance": 2500, "Credit Card": 600, "Loan": 300, "Mutual Funds": 1500, "Savings Account": 1000 },
-  },
-];
-
-// Client List Sidebar Component
-const ClientListSidebar = ({ isOpen, toggleSidebar, onClientSelect }) => {
-  return (
-    <div
-      className={`fixed top-0 left-0 h-full bg-white shadow-lg transform transition-transform duration-300 ${
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      } w-64 z-40`}
-    >
-      <div className="p-4">
-        <h2 className="text-xl font-bold mb-4 text-black">Clients</h2>
-        <button
-          className="bg-blue-600 text-white px-3 py-1 rounded mb-4"
-          onClick={toggleSidebar}
-        >
-          {isOpen ? "Hide Clients" : "Show Clients"}
-        </button>
-        <ul>
-          {clientsData.map((client, index) => (
-            <li
-              key={index}
-              className="p-2 cursor-pointer hover:bg-blue-100 rounded text-black"
-              onClick={() => onClientSelect(client)}
-            >
-              {client.name}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-};
-
-// Client Visualizations Sidebar Component
-const ClientVisualizationsSidebar = ({ isOpen, toggleSidebar, selectedClient }) => {
-  if (!selectedClient) return null;
-
-  // Bar Chart Data for Sales
-  const salesChartData = {
-    labels: Object.keys(selectedClient.sales),
-    datasets: [
-      {
-        label: "Sales",
-        data: Object.values(selectedClient.sales),
-        backgroundColor: "rgba(54, 162, 235, 0.6)",
-        borderColor: "rgba(54, 162, 235, 1)",
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  // Pie Chart Data for Profits
-  const profitChartData = {
-    labels: Object.keys(selectedClient.profits),
-    datasets: [
-      {
-        label: "Profits (₹)",
-        data: Object.values(selectedClient.profits),
-        backgroundColor: [
-          "rgba(255, 99, 132, 0.6)",
-          "rgba(54, 162, 235, 0.6)",
-          "rgba(255, 206, 86, 0.6)",
-          "rgba(75, 192, 192, 0.6)",
-          "rgba(153, 102, 255, 0.6)",
-        ],
-        borderColor: [
-          "rgba(255, 99, 132, 1)",
-          "rgba(54, 162, 235, 1)",
-          "rgba(255, 206, 86, 1)",
-          "rgba(75, 192, 192, 1)",
-          "rgba(153, 102, 255, 1)",
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "top",
-      },
-    },
-  };
-
-  return (
-    <div
-      className={`fixed top-0 right-0 h-full bg-white shadow-lg transform transition-transform duration-300 ${
-        isOpen ? "translate-x-0" : "translate-x-full"
-      } w-96 z-40`}
-    >
-      <div className="p-4">
-        <h2 className="text-xl font-bold mb-4 text-black">{selectedClient.name} - Performance</h2>
-        <button
-          className="bg-blue-600 text-white px-3 py-1 rounded mb-4"
-          onClick={toggleSidebar}
-        >
-          {isOpen ? "Hide Visualizations" : "Show Visualizations"}
-        </button>
-
-        {/* Sales Bar Chart */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2 text-black">Sales by Category</h3>
-          <div className="h-64">
-            <Bar data={salesChartData} options={chartOptions} />
-          </div>
-        </div>
-
-        {/* Profits Pie Chart */}
-        <div>
-          <h3 className="text-lg font-semibold mb-2 text-black">Profit Distribution (₹)</h3>
-          <div className="h-64">
-            <Pie data={profitChartData} options={chartOptions} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// AI Assistant Component
-const AIAssistant = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { type: "bot", text: "Hi! I'm your GroMo Xpert AI Assistant. I can help with anything—ask me about the app, sales tips, or anything else!" },
-  ]);
-  const [input, setInput] = useState("");
-  const inputRef = useRef(null);
-  const [position, setPosition] = useState({ x: window.innerWidth - 320 - 16, y: window.innerHeight - 400 - 16 });
-  const [dragging, setDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const chatRef = useRef(null);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setPosition((prev) => ({
-        x: Math.min(prev.x, window.innerWidth - 320 - 16),
-        y: Math.min(prev.y, window.innerHeight - 400 - 16),
-      }));
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const handleMouseDown = (e) => {
-    setDragging(true);
-    const rect = chatRef.current.getBoundingClientRect();
-    setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-  };
-
-  const handleMouseMove = (e) => {
-    if (!dragging) return;
-
-    let newX = e.clientX - dragOffset.x;
-    let newY = e.clientY - dragOffset.y;
-
-    newX = Math.max(0, Math.min(newX, window.innerWidth - 320));
-    newY = Math.max(0, Math.min(newY, window.innerHeight - 400));
-
-    setPosition({ x: newX, y: newY });
-  };
-
-  const handleMouseUp = () => {
-    setDragging(false);
-  };
-
-  const getBotResponse = (userMessage) => {
-    const lowerMessage = userMessage.toLowerCase();
-    if (lowerMessage.includes("hi") || lowerMessage.includes("hello") || lowerMessage.includes("hey")) {
-      return "Hello there! How can I assist you today?";
-    }
-    if (lowerMessage.includes("how are you")) {
-      return "I'm doing great, thanks for asking! How about you?";
-    }
-    if (lowerMessage.includes("thank you") || lowerMessage.includes("thanks")) {
-      return "You're welcome! Anything else I can help with?";
-    }
-    if (lowerMessage.includes("lead") || lowerMessage.includes("generator")) {
-      return "The Lead Generator helps you create personalized pitches for leads. Select a product, click 'Generate Leads & Pitches', and send pitches via WhatsApp!";
-    }
-    if (lowerMessage.includes("growth") || lowerMessage.includes("dashboard")) {
-      return "The Growth Dashboard shows your earnings forecast, sales data, goals, and top-performing GPs. Use it to identify gaps and boost your sales!";
-    }
-    if (lowerMessage.includes("post-sale") || lowerMessage.includes("automation")) {
-      return "Post-Sale Automation helps you manage customers with reminders, claim statuses, and upsell opportunities. You can chat with customers in their language!";
-    }
-    if (lowerMessage.includes("tip") || lowerMessage.includes("sales tip")) {
-      return "Quick tip: Focus on categories with zero sales, like Loans or Mutual Funds, to maximize your earnings! Check the Growth Dashboard for details.";
-    }
-    if (lowerMessage.includes("weather")) {
-      return "I can’t check the weather right now, but if you tell me your location, I can give you some general advice on preparing for the day!";
-    }
-    if (lowerMessage.includes("joke")) {
-      return "Why did the salesperson bring a ladder to the meeting? Because they wanted to take the deal to the next level! 😄 Want another one?";
-    }
-    if (lowerMessage.includes("motivation") || lowerMessage.includes("inspire")) {
-      return "Here’s a little motivation for you: 'Success is the sum of small efforts, repeated day in and day out.' Keep pushing with GroMo Xpert—you’ve got this!";
-    }
-    if (lowerMessage.includes("math") || lowerMessage.includes("calculate")) {
-      const match = userMessage.match(/(\d+)\s*[\+\-\*\/]\s*(\d+)/);
-      if (match) {
-        const num1 = parseFloat(match[1]);
-        const num2 = parseFloat(match[2]);
-        const operator = userMessage.match(/[\+\-\*\/]/)[0];
-        let result;
-        switch (operator) {
-          case "+": result = num1 + num2; break;
-          case "-": result = num1 - num2; break;
-          case "*": result = num1 * num2; break;
-          case "/": result = num2 !== 0 ? num1 / num2 : "Cannot divide by zero!"; break;
-          default: result = "I couldn’t parse that calculation.";
-        }
-        return `The result of ${num1} ${operator} ${num2} is ${result}. Need help with another calculation?`;
-      }
-      return "I can help with simple math! Try something like '5 + 3' or '10 * 2'.";
-    }
-    return "I’m not sure about that, but I’m here to help! You can ask about GroMo Xpert features, sales tips, or anything else on your mind.";
-  };
-
-  const handleSend = () => {
-    if (!input.trim()) return;
-    setMessages((prev) => [...prev, { type: "user", text: input }]);
-    const botResponse = getBotResponse(input);
-    setMessages((prev) => [...prev, { type: "bot", text: botResponse }]);
-    setInput("");
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
-
-  return (
-    <div className="z-50">
-      <button
-        className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 transition"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {isOpen ? "Close AI Assistant" : "AI Assistant"}
-      </button>
-      {isOpen && (
-        <div
-          ref={chatRef}
-          className="fixed w-80 h-96 bg-white border rounded-lg shadow-lg flex flex-col"
-          style={{ left: `${position.x}px`, top: `${position.y}px` }}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-        >
-          <div
-            className="bg-blue-600 text-white p-3 rounded-t-lg cursor-move"
-            onMouseDown={handleMouseDown}
-          >
-            <h3 className="text-lg font-semibold">GroMo Xpert AI Assistant</h3>
-          </div>
-          <div className="flex-1 p-3 overflow-y-auto">
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`mb-2 ${
-                  msg.type === "user" ? "text-right" : "text-left"
-                }`}
-              >
-                <span
-                  className={`inline-block p-2 rounded-lg ${
-                    msg.type === "user"
-                      ? "bg-blue-100 text-blue-800"
-                      : "bg-gray-100 text-gray-800"
-                  }`}
-                >
-                  {msg.text}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="p-3 border-t flex space-x-2">
-            <input
-              ref={inputRef}
-              type="text"
-              className="flex-1 border p-2 rounded text-black focus:outline-none focus:ring-2 focus:ring-blue-600"
-              placeholder="Type your message..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  handleSend();
-                }
-              }}
-            />
-            <button
-              className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-              onClick={handleSend}
-            >
-              Send
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 export default function Home() {
-  // State for login
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("authToken"));
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  // State for app features
+  const [activeTab, setActiveTab] = useState("leads");
   const [product, setProduct] = useState("Health Insurance");
   const [pitches, setPitches] = useState([]);
   const [leadStatuses, setLeadStatuses] = useState({});
-  const [view, setView] = useState("LeadGenerator");
-  const [chatMessages, setChatMessages] = useState({});
-  const [userInput, setUserInput] = useState({});
-  const [isClientListOpen, setIsClientListOpen] = useState(false);
-  const [isVisualizationsOpen, setIsVisualizationsOpen] = useState(false);
-  const [selectedClient, setSelectedClient] = useState(null);
-  const inputRefs = customers.reduce((acc, customer) => {
-    acc[customer.name] = useRef(null);
-    return acc;
-  }, {});
+
+  useEffect(() => {
+    if (localStorage.getItem("authToken")) {
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   const handleLogin = (e) => {
     e.preventDefault();
-    const validEmail = "user@gromo.com";
-    const validPassword = "password123";
-
-    if (email === validEmail && password === validPassword) {
+    if (email === "user@gromo.com" && password === "password123") {
       localStorage.setItem("authToken", "loggedIn");
       setIsLoggedIn(true);
       setError("");
     } else {
-      setError("Invalid email or password. Please try again.");
+      setError("Invalid email or password");
     }
-  };
-
-  const handleSkipLogin = () => {
-    localStorage.setItem("authToken", "loggedIn");
-    setIsLoggedIn(true);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    setIsLoggedIn(false);
-    setEmail("");
-    setPassword("");
-    setError("");
   };
 
   const generatePitches = async () => {
@@ -452,393 +76,53 @@ export default function Home() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ product, lead }),
           });
-          if (!res.ok) {
-            throw new Error(`API request failed with status ${res.status}`);
-          }
-          const data = await res.json();
+          const data = await res.ok ? await res.json() : { pitch: `Hi ${lead.name}, I have a great ${product} plan for you!` };
           return { ...lead, pitch: data.pitch };
         })
       );
       setPitches(results);
-      const initialStatuses = results.reduce((acc, lead) => {
-        acc[lead.name] = leadStatuses[lead.name] || "Not Contacted";
-        return acc;
-      }, {});
-      setLeadStatuses(initialStatuses);
+      setLeadStatuses(results.reduce((acc, lead) => ({ ...acc, [lead.name]: "Not Contacted" }), {}));
     } catch (error) {
-      console.error("Error generating pitches:", error);
-      alert("Failed to generate pitches. Check the console for details.");
+      console.error(error);
+      alert("Failed to generate pitches.");
     }
   };
 
-  const createWhatsAppLink = (phone, message) => {
-    const encodedMessage = encodeURIComponent(message);
-    return `https://wa.me/${phone}?text=${encodedMessage}`;
+  const updateLeadStatus = (leadName, status) => {
+    setLeadStatuses(prev => ({ ...prev, [leadName]: status }));
   };
 
-  const updateLeadStatus = (leadName, newStatus) => {
-    setLeadStatuses((prev) => ({
-      ...prev,
-      [leadName]: newStatus,
-    }));
-  };
-
-  const getChatResponse = (customer, queryType) => {
-    const lang = customer.language;
-    const responses = {
-      Telugu: {
-        reminder: `మీ ఇన్సూరెన్స్ పాలసీ రీన్యూవల్ దగ్గరలో ఉంది — కస్టమర్‌కు రిమైండ్ చేయాలా?`,
-        claimStatus: `మీ క్లెయిమ్ స్థితి: ${customer.claimStatus}`,
-        upsell: `మీరు మా కొత్త సేవింగ్స్ అకౌంట్ ప్లాన్‌ను పరిగణించాలనుకుంటున్నారా?`,
-        unknown: `దయచేసి "రీన్యూవల్", "క్లెయిమ్ స్థితి", లేదా "కొత్త ప్లాన్" గురించి అడగండి.`,
-      },
-      Hindi: {
-        reminder: `आपकी बीमा पॉलिसी रिन्यूअल के लिए देय है — क्या मुझे ग्राहक को याद दिलाना चाहिए?`,
-        claimStatus: `आपके दावे की स्थिति: ${customer.claimStatus}`,
-        upsell: `क्या आप हमारे नए बचत खाते योजना पर विचार करना चाहेंगे?`,
-        unknown: `कृपया "रिन्यूअल", "दावा स्थिति", या "नया प्लान" के बारे में पूछें।`,
-      },
-      English: {
-        reminder: `Your insurance policy is due for renewal — should I remind the customer?`,
-        claimStatus: `Your claim status: ${customer.claimStatus}`,
-        upsell: `Would you like to consider our new Savings Account plan?`,
-        unknown: `Please ask about "renewal", "claim status", or "new plan".`,
-      },
-    };
-    return responses[lang][queryType] || responses["English"][queryType];
-  };
-
-  const determineQueryType = (input) => {
-    const lowerInput = input.toLowerCase();
-    if (lowerInput.includes("renew") || lowerInput.includes("remind")) {
-      return "reminder";
-    } else if (lowerInput.includes("claim") || lowerInput.includes("status")) {
-      return "claimStatus";
-    } else if (lowerInput.includes("upsell") || lowerInput.includes("new plan") || lowerInput.includes("recommend")) {
-      return "upsell";
-    } else {
-      return "unknown";
-    }
-  };
-
-  const handleChatSubmit = (customer, customerName) => {
-    const userMessage = userInput[customerName] || "";
-    if (!userMessage.trim()) return;
-
-    console.log(`User input for ${customerName}: ${userMessage}`);
-    setChatMessages((prev) => ({
-      ...prev,
-      [customerName]: [
-        ...(prev[customerName] || []),
-        { type: "user", message: userMessage },
-      ],
-    }));
-
-    const queryType = determineQueryType(userMessage);
-    const response = getChatResponse(customer, queryType);
-
-    console.log(`Chatbot response for ${customerName}: ${response}`);
-    setChatMessages((prev) => ({
-      ...prev,
-      [customerName]: [
-        ...(prev[customerName] || []),
-        { type: queryType, message: response },
-      ],
-    }));
-
-    setUserInput((prev) => ({
-      ...prev,
-      [customerName]: "",
-    }));
-    if (inputRefs[customerName].current) {
-      inputRefs[customerName].current.focus();
-    }
-  };
-
-  const LeadGeneratorView = () => (
-    <>
-      <label className="block font-semibold">Select a Product:</label>
-      <select
-        className="border p-2 rounded w-full mb-4 text-white"
-        value={product}
-        onChange={(e) => setProduct(e.target.value)}
-      >
-        <option className="text-black">Health Insurance</option>
-        <option className="text-black">Credit Card</option>
-        <option className="text-black">Loan</option>
-      </select>
-
-      <button
-        className="bg-blue-600 text-white px-4 py-2 rounded mb-6"
-        onClick={generatePitches}
-      >
-        Generate Leads & Pitches
-      </button>
-
-      <div className="text-black">
-        {pitches.map((lead, index) => (
-          <div key={index} className="p-4 border rounded bg-gray-100">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="font-bold text-black">{lead.name} ({lead.location})</p>
-                <p className="mb-2">{lead.pitch}</p>
-                <p className="text-sm text-gray-600">
-                  Status: {leadStatuses[lead.name] || "Not Contacted"}
-                </p>
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  className={`px-3 py-1 rounded text-sm ${
-                    leadStatuses[lead.name] === "Contacted"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-800"
-                  }`}
-                  onClick={() => updateLeadStatus(lead.name, "Contacted")}
-                >
-                  Contacted
-                </button>
-                <button
-                  className={`px-3 py-1 rounded text-sm ${
-                    leadStatuses[lead.name] === "Followed Up"
-                      ? "bg-yellow-500 text-white"
-                      : "bg-gray-200 text-gray-800"
-                  }`}
-                  onClick={() => updateLeadStatus(lead.name, "Followed Up")}
-                >
-                  Followed Up
-                </button>
-                <button
-                  className={`px-3 py-1 rounded text-sm ${
-                    leadStatuses[lead.name] === "Closed"
-                      ? "bg-green-600 text-white"
-                      : "bg-gray-200 text-gray-800"
-                  }`}
-                  onClick={() => updateLeadStatus(lead.name, "Closed")}
-                >
-                  Closed
-                </button>
-              </div>
-            </div>
-            <a
-              href={createWhatsAppLink(lead.phone, lead.pitch)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-green-600 text-white px-4 py-2 rounded inline-block mt-2"
-            >
-              Send via WhatsApp
-            </a>
-          </div>
-        ))}
-      </div>
-    </>
-  );
-
-  const GrowthDashboardView = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Why Am I Not Earning More?</h2>
-      <div className="p-4 border rounded bg-white shadow">
-        <h3 className="font-semibold text-lg text-black">Earnings Forecast</h3>
-        <p className="text-gray-700">Projected: {growthData.earningsForecast}</p>
-      </div>
-      <div className="p-4 border rounded bg-white shadow">
-        <h3 className="font-semibold text-lg text-black">Product Category Gaps</h3>
-        <p className="text-gray-700 mb-2">
-          You haven’t sold in these categories: {growthData.categoryGaps.join(", ")}
-        </p>
-        <p className="text-gray-700 font-semibold">Your Sales:</p>
-        <ul className="list-disc list-inside text-gray-700">
-          {Object.entries(growthData.salesData).map(([category, sales], index) => (
-            <li key={index}>
-              {category}: {sales} {sales === 1 ? "sale" : "sales"}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="p-4 border rounded bg-white shadow">
-        <h3 className="font-semibold text-lg text-black">Your Goals</h3>
-        <p className="text-gray-700">
-          Daily Goal: ₹{growthData.dailyGoal.achieved} / ₹{growthData.dailyGoal.target}
-        </p>
-        <div className="w-full bg-gray-200 rounded h-4 mt-2">
-          <div
-            className="bg-blue-600 h-4 rounded"
-            style={{
-              width: `${(growthData.dailyGoal.achieved / growthData.dailyGoal.target) * 100}%`,
-            }}
-          ></div>
-        </div>
-        <p className="text-gray-700 mt-2">
-          Weekly Goal: ₹{growthData.weeklyGoal.achieved} / ₹{growthData.weeklyGoal.target}
-        </p>
-        <div className="w-full bg-gray-200 rounded h-4 mt-2">
-          <div
-            className="bg-blue-600 h-4 rounded"
-            style={{
-              width: `${(growthData.weeklyGoal.achieved / growthData.weeklyGoal.target) * 100}%`,
-            }}
-          ></div>
-        </div>
-      </div>
-      <div className="p-4 border rounded bg-white shadow">
-        <h3 className="font-semibold text-lg text-black">What Top 5 GPs Are Selling</h3>
-        <ul className="space-y-2">
-          {growthData.topGPs.map((gp) => (
-            <li key={gp.rank} className="text-gray-700">
-              <span className="font-semibold">
-                #{gp.rank} {gp.name}:
-              </span>{" "}
-              {Object.entries(gp.sales)
-                .map(([category, sales]) => `${sales} ${category}`)
-                .join(", ")}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="p-4 border rounded bg-yellow-100 shadow">
-        <h3 className="font-semibold text-lg text-black">Daily Mission</h3>
-        <p className="text-gray-700">{growthData.dailyMission}</p>
-      </div>
-    </div>
-  );
-
-  const PostSaleAutomationView = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Post-Sale Automation</h2>
-      {customers.map((customer, index) => (
-        <div key={index} className="p-4 border rounded bg-white shadow">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="font-bold text-black">{customer.name}</p>
-              <p className="text-gray-700">Policy: {customer.policy}</p>
-              <p className="text-gray-700">Renewal Date: {customer.renewalDate}</p>
-              <p className="text-gray-700">
-                Sentiment: {customer.sentiment.charAt(0).toUpperCase() + customer.sentiment.slice(1)}
-              </p>
-            </div>
-            <div className="flex space-x-2">
-              <a
-                href={createWhatsAppLink(customer.phone, getChatResponse(customer, "reminder"))}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-green-600 text-white px-3 py-1 rounded text-sm"
-              >
-                Send Reminder via WhatsApp
-              </a>
-            </div>
-          </div>
-          <div className="mt-4">
-            <h3 className="font-semibold text-lg text-black">Chatbot Assistance</h3>
-            <div className="p-2 border rounded bg-gray-50 max-h-40 overflow-y-auto mb-2">
-              {(chatMessages[customer.name] || []).map((msg, idx) => (
-                <p
-                  key={idx}
-                  className={`text-gray-700 mb-1 ${
-                    msg.type === "user" ? "text-right text-blue-600" : "text-left"
-                  }`}
-                >
-                  <span className="font-semibold">
-                    {msg.type === "user"
-                      ? "You: "
-                      : `${msg.type.replace(/([A-Z])/g, " $1").trim()}: `}
-                  </span>
-                  {msg.message}
-                </p>
-              ))}
-            </div>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                ref={inputRefs[customer.name]}
-                className="border p-2 rounded w-full text-black focus:outline-none focus:ring-2 focus:ring-blue-600"
-                placeholder="Ask about renewal, claim status, or new plan..."
-                value={userInput[customer.name] || ""}
-                onChange={(e) => {
-                  console.log(`Typing in ${customer.name}'s input: ${e.target.value}`);
-                  setUserInput((prev) => ({
-                    ...prev,
-                    [customer.name]: e.target.value,
-                  }));
-                }}
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
-                    console.log(`Enter key pressed for ${customer.name}`);
-                    handleChatSubmit(customer, customer.name);
-                  }
-                }}
-              />
-              <button
-                className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                onClick={() => handleChatSubmit(customer, customer.name)}
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
-  // Login Section
   if (!isLoggedIn) {
     return (
-        
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-          <h1 className="text-3xl font-bold text-center mb-6 text-blue-600">
-            Welcome to GroMo Xpert
-          </h1>
-          <p className="text-center text-gray-600 mb-8">
-            Log in to access your dashboard
-          </p>
-          <div className="flex justify-center mb-6">
-            <img
-              src="https://sdmntprwestus.oaiusercontent.com/files/00000000-e244-6230-9f2c-257c44932144/raw?se=2025-05-17T15%3A01%3A42Z&sp=r&sv=2024-08-04&sr=b&scid=00000000-0000-0000-0000-000000000000&skoid=789f404f-91a9-4b2f-932c-c44965c11d82&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-05-17T01%3A30%3A38Z&ske=2025-05-18T01%3A30%3A38Z&sks=b&skv=2024-08-04&sig=8nZTbUCqGPT0EOwoE09i15pQSC47wyPzfvgMCM8XkfY%3D"
-              alt="GroMo Xpert Logo"
-              className="h-08 w-auto"
-            />
+      <div className="flex min-h-screen w-full items-center justify-center bg-[#0a0a0a] p-4">
+        <div className="w-full max-w-md bg-white/5 p-8 rounded-3xl border border-white/10 shadow-2xl backdrop-blur-xl">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
+              GROMO XPERT
+            </h1>
+            <p className="text-gray-400 mt-2 text-sm">Sign in to your professional dashboard</p>
           </div>
-          <div>
-            <div className="mb-4">
-              <label className="block text-gray-700 font-semibold mb-2" htmlFor="email">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-black"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="mb-6">
-              <label className="block text-gray-700 font-semibold mb-2" htmlFor="password">
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-black"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            {error && (
-              <p className="text-red-500 text-center mb-4">{error}</p>
-            )}
-            <button
-              className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition mb-4"
-              onClick={handleLogin}
-            >
+          <div className="flex flex-col gap-5">
+            <input 
+              type="email" 
+              placeholder="user@gromo.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-white/10 border border-white/10 text-white rounded-xl h-12 px-4 focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+            <input 
+              type="password" 
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="bg-white/10 border border-white/10 text-white rounded-xl h-12 px-4 focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+            {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+            <button onClick={handleLogin} className="w-full h-12 bg-blue-600 text-white font-bold rounded-xl mt-2 hover:bg-blue-500 transition-colors">
               Log In
             </button>
-            <button
-              className="w-full bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition"
-              onClick={handleSkipLogin}
-            >
-              Skip Login
+            <button onClick={() => { setIsLoggedIn(true); localStorage.setItem("authToken", "loggedIn"); }} className="text-gray-500 text-sm hover:text-gray-300">
+              Skip for testing
             </button>
           </div>
         </div>
@@ -846,88 +130,206 @@ export default function Home() {
     );
   }
 
-  // Main App Content (shown after login)
   return (
-    <div className="relative flex min-h-screen">
-      {/* Client List Sidebar */}
-      <ClientListSidebar
-        isOpen={isClientListOpen}
-        toggleSidebar={() => setIsClientListOpen(!isClientListOpen)}
-        onClientSelect={(client) => {
-          setSelectedClient(client);
-          setIsVisualizationsOpen(true);
-        }}
-      />
-
-      {/* Main Content */}
-      <div
-        className={`flex-1 transition-all duration-300 ${
-          isClientListOpen ? "ml-64" : "ml-0"
-        } ${isVisualizationsOpen ? "mr-96" : "mr-0"}`}
-      >
-        <main className="p-6 max-w-3xl mx-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-bold">
-              GroMo Xpert
-            </h1>
-            <button
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
-              onClick={handleLogout}
-            >
-              Logout
-            </button>
+    <div className="min-h-screen bg-[#050505] text-white">
+      {/* Navbar */}
+      <nav className="border-b border-white/10 bg-black/50 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="font-bold text-xl tracking-tight">
+            <span className="text-blue-500">GroMo</span> Xpert
           </div>
-          <div className="flex space-x-4 mb-6">
-            <button
-              className="bg-blue-600 text-white px-4 py-2 rounded"
-              onClick={() => setIsClientListOpen(true)}
-            >
-              Show Clients
-            </button>
-            <button
-              className={`px-4 py-2 rounded ${
-                view === "LeadGenerator" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"
-              }`}
-              onClick={() => setView("LeadGenerator")}
-            >
-              Lead Generator & Sales Copilot
-            </button>
-            <button
-              className={`px-4 py-2 rounded ${
-                view === "GrowthDashboard" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"
-              }`}
-              onClick={() => setView("GrowthDashboard")}
-            >
-              Growth Dashboard
-            </button>
-            <button
-              className={`px-4 py-2 rounded ${
-                view === "PostSaleAutomation" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"
-              }`}
-              onClick={() => setView("PostSaleAutomation")}
-            >
-              Post-Sale Automation
-            </button>
+          <button onClick={() => { setIsLoggedIn(false); localStorage.removeItem("authToken"); }} className="bg-white/10 text-white hover:bg-red-500/20 hover:text-red-400 rounded-lg py-2 px-4 text-sm font-medium transition-colors">
+            Log Out
+          </button>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto px-6 py-12">
+        <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <h1 className="text-4xl font-black mb-2 text-white">Welcome back.</h1>
+            <p className="text-gray-400 text-lg">Manage your leads and track your sales growth.</p>
           </div>
-          {view === "LeadGenerator" ? (
-            <LeadGeneratorView />
-          ) : view === "GrowthDashboard" ? (
-            <GrowthDashboardView />
-          ) : (
-            <PostSaleAutomationView />
-          )}
-        </main>
-      </div>
+          <div className="bg-gradient-to-r from-blue-900/50 to-indigo-900/50 p-4 rounded-2xl border border-blue-500/30">
+            <p className="text-xs text-blue-300 font-semibold uppercase tracking-wider mb-1">Daily Mission</p>
+            <p className="font-medium text-white">{growthData.dailyMission}</p>
+          </div>
+        </div>
 
-      {/* Client Visualizations Sidebar */}
-      <ClientVisualizationsSidebar
-        isOpen={isVisualizationsOpen}
-        toggleSidebar={() => setIsVisualizationsOpen(!isVisualizationsOpen)}
-        selectedClient={selectedClient}
-      />
+        {/* Custom Tabs */}
+        <div className="flex space-x-2 border-b border-white/10 mb-8 overflow-x-auto pb-2">
+          {["leads", "dashboard", "automation"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-6 py-3 rounded-lg font-semibold text-sm transition-all whitespace-nowrap ${
+                activeTab === tab ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-white/5 hover:text-white"
+              }`}
+            >
+              {tab === "leads" && "Lead Generator"}
+              {tab === "dashboard" && "Growth Dashboard"}
+              {tab === "automation" && "Post-Sale Automation"}
+            </button>
+          ))}
+        </div>
 
-      {/* AI Assistant */}
-      <AIAssistant />
+        {/* Tab Content */}
+        {activeTab === "leads" && (
+          <div className="space-y-6 animate-in fade-in duration-500">
+            <div className="bg-white/5 p-6 rounded-2xl border border-white/10 flex flex-col sm:flex-row items-end gap-4">
+              <div className="w-full sm:w-64">
+                <label className="block text-sm font-medium text-gray-400 mb-2">Select Product</label>
+                <select 
+                  value={product} 
+                  onChange={(e) => setProduct(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl h-12 px-4 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  <option value="Health Insurance">Health Insurance</option>
+                  <option value="Credit Card">Credit Card</option>
+                  <option value="Loan">Loan</option>
+                </select>
+              </div>
+              <button onClick={generatePitches} className="h-12 px-8 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 w-full sm:w-auto transition-colors">
+                Generate Pitches
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {pitches.map((lead, idx) => (
+                <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col h-full hover:border-white/20 transition-colors">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-4">
+                      <img src={`https://i.pravatar.cc/150?u=${lead.name}`} className="w-12 h-12 rounded-full border-2 border-white/10" alt="" />
+                      <div>
+                        <h4 className="font-bold text-white text-lg">{lead.name}</h4>
+                        <p className="text-sm text-gray-400">{lead.location} • {lead.language}</p>
+                      </div>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      leadStatuses[lead.name] === "Closed" ? "bg-green-500/20 text-green-400" :
+                      leadStatuses[lead.name] === "Contacted" ? "bg-blue-500/20 text-blue-400" :
+                      "bg-gray-500/20 text-gray-400"
+                    }`}>
+                      {leadStatuses[lead.name] || "Not Contacted"}
+                    </span>
+                  </div>
+                  <div className="flex-grow bg-black/40 p-4 rounded-xl text-sm text-gray-300 italic mb-6">
+                    "{lead.pitch}"
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-auto">
+                    <button onClick={() => updateLeadStatus(lead.name, "Contacted")} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors">Contacted</button>
+                    <button onClick={() => updateLeadStatus(lead.name, "Closed")} className="px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-sm font-medium transition-colors">Closed</button>
+                    <a href={`https://wa.me/${lead.phone}?text=${encodeURIComponent(lead.pitch)}`} target="_blank" rel="noreferrer" className="ml-auto px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-bold transition-colors">
+                      WhatsApp
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "dashboard" && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
+            <div className="space-y-6 lg:col-span-2">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                <h3 className="text-xl font-bold mb-6">Goals Progress</h3>
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-gray-400">Daily Goal</span>
+                      <span className="font-bold">₹{growthData.dailyGoal.achieved} / ₹{growthData.dailyGoal.target}</span>
+                    </div>
+                    <div className="h-3 w-full bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(growthData.dailyGoal.achieved / growthData.dailyGoal.target) * 100}%` }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-gray-400">Weekly Goal</span>
+                      <span className="font-bold">₹{growthData.weeklyGoal.achieved} / ₹{growthData.weeklyGoal.target}</span>
+                    </div>
+                    <div className="h-3 w-full bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(growthData.weeklyGoal.achieved / growthData.weeklyGoal.target) * 100}%` }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                <h3 className="text-xl font-bold mb-6">Sales by Category</h3>
+                <div className="h-72 w-full">
+                  <Bar 
+                    data={{
+                      labels: Object.keys(growthData.salesData),
+                      datasets: [{
+                        label: "Sales",
+                        data: Object.values(growthData.salesData),
+                        backgroundColor: "#3b82f6",
+                        borderRadius: 6
+                      }]
+                    }} 
+                    options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} 
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-gradient-to-br from-emerald-900/50 to-green-900/50 border border-emerald-500/30 rounded-2xl p-6 text-center">
+                <p className="text-emerald-300 font-medium mb-2">Earnings Forecast</p>
+                <p className="text-4xl font-black text-white">{growthData.earningsForecast}</p>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                <h3 className="text-xl font-bold mb-6">Top Performing GPs</h3>
+                <div className="space-y-4">
+                  {growthData.topGPs.map((gp, i) => (
+                    <div key={i} className="flex items-center gap-4 p-3 bg-black/40 rounded-xl">
+                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-bold text-gray-400">
+                        {gp.rank}
+                      </div>
+                      <div>
+                        <p className="font-bold text-white">{gp.name}</p>
+                        <p className="text-xs text-gray-400">Top Sale: {Object.keys(gp.sales)[0]}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "automation" && (
+          <div className="space-y-4 animate-in fade-in duration-500">
+            {customers.map((customer, i) => (
+              <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 hover:bg-white/10 transition-colors">
+                <div className="w-full md:w-1/3">
+                  <h4 className="text-xl font-bold text-white">{customer.name}</h4>
+                  <p className="text-gray-400 text-sm mb-3">{customer.policy}</p>
+                  <div className="flex gap-2">
+                    <span className="px-2 py-1 bg-yellow-500/20 text-yellow-500 text-xs font-bold rounded">Renews: {customer.renewalDate}</span>
+                    <span className={`px-2 py-1 text-xs font-bold rounded ${customer.claimStatus === "Approved" ? "bg-green-500/20 text-green-400" : "bg-gray-500/20 text-gray-400"}`}>
+                      Claim: {customer.claimStatus}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="w-full md:w-2/3 flex flex-col sm:flex-row items-center gap-4 bg-black/40 p-4 rounded-xl border border-white/5">
+                  <div className="flex-grow">
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Automated Action</p>
+                    <p className="text-sm font-medium text-gray-200">Policy renewal is approaching. Recommend a reminder.</p>
+                  </div>
+                  <a href={`https://wa.me/${customer.phone}?text=Hello ${customer.name}, your policy is due for renewal soon.`} target="_blank" rel="noreferrer" className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold text-center transition-colors">
+                    Send Reminder
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
-};
+}
